@@ -57,6 +57,44 @@ rng:  # Random number generator using Xorshift technique
         mul  $v0, $t0, $t1 # return value range 45-360
         jr $ra
 
+
+puzzle_solving:
+        sw $zero, has_puzzle
+        la $t0, puzzle
+        sw $t0, REQUEST_PUZZLE
+        while_loop:     
+                lw $t1, has_puzzle
+                bne $zero, $t1, end_while_loop
+                j while_loop
+        end_while_loop:
+        sub $sp, $sp, 24
+        sw $t0, 0($sp)
+        sw $t1, 4($sp)
+        sw $t2, 8($sp)
+        sw $t3, 12($sp)
+        sw $t4, 16($sp)
+        sw $a0, 20($sp)
+
+        la $a0, puzzle
+        la $a1, heap
+        li $a2, 0
+        li $a3, 0
+        
+        jal solve
+                
+        lw $t0, 0($sp)
+        lw $t1, 4($sp)
+        lw $t2, 8($sp)
+        lw $t3, 12($sp)
+        lw $t4, 16($sp)
+        lw $a0, 20($sp)
+        add $sp, $sp, 24
+        la $t4, heap
+        sw $t4, SUBMIT_SOLUTION
+        jr $ra
+
+
+
 .text
 main:
 # Construct interrupt mask
@@ -67,8 +105,37 @@ main:
         or      $t4, $t4, 1                       # global enable
 	    mtc0    $t4, $12
 
-#Fill in your code here
+# Fill in your code here
 
+        sub $sp, $sp, 24
+        sw $t0, 0($sp)
+        sw $t1, 4($sp)
+        sw $t2, 8($sp)
+        sw $t3, 12($sp)
+        sw $t4, 16($sp)
+        sw $a0, 20($sp)
+        
+        jal puzzle_solving
+                
+        lw $t0, 0($sp)
+        lw $t1, 4($sp)
+        lw $t2, 8($sp)
+        lw $t3, 12($sp)
+        lw $t4, 16($sp)
+        lw $a0, 20($sp)
+        add $sp, $sp, 24
+
+
+        lw $t0, TIMER
+        add $t0, $t0, 1000
+        sw $t0, TIMER
+        li $t0, 10
+        sw $t0, VELOCITY
+
+        li $t1, 90
+        sw $t1, ANGLE
+        li $t1, 1
+        sw $t1, ANGLE_CONTROL
 infinite:
         j       infinite              # Don't remove this! If this is removed, then your code will not be graded!!!
 
@@ -110,17 +177,72 @@ interrupt_dispatch:                     # Interrupt:
 
 bonk_interrupt:
         sw      $0, BONK_ACK
-#Fill in your code here
+# Fill in your code here
+        li $t1, 10
+        sw $t1, VELOCITY
+
+        sub $sp, $sp, 24
+        sw $ra, 0($sp)
+        sw $a0, 4($sp)
+        sw $t0, 8($sp)
+        sw $t1, 12($sp)
+        sw $t2, 16($sp)
+        sw $t3, 20($sp)
+
+        lw $a0, ANGLE
+        addi $a0, $a0, 1 # Initial input value to RNG cannot be zero
+        jal rng
+
+        lw $ra, 0($sp)
+        lw $a0, 4($sp)
+        lw $t0, 8($sp)
+        lw $t1, 12($sp)
+        lw $t2, 16($sp)
+        lw $t3, 20($sp)
+        add $sp, $sp, 24
+        li $t1, 0
+        sw $t1, ANGLE_CONTROL
+        sw $v0, ANGLE
+
+
+
         j       interrupt_dispatch      # see if other interrupts are waiting
 
 request_puzzle_interrupt:
         sw      $0, REQUEST_PUZZLE_ACK
-#Fill in your code here
+# Fill in your code here
+        li $t0, 1       
+        sw $t0, has_puzzle
         j	interrupt_dispatch
 
 timer_interrupt:
         sw      $0, TIMER_ACK
-#Fill in your code here
+# Fill in your code here
+        li $t0, 1
+        sw $t0, PICKUP
+
+        lw $t0, TIMER
+        add $t0, $t0, 1000
+        sw $t0, TIMER
+
+        sub $sp, $sp, 24
+        sw $t0, 0($sp)
+        sw $t1, 4($sp)
+        sw $t2, 8($sp)
+        sw $t3, 12($sp)
+        sw $t4, 16($sp)
+        sw $a0, 20($sp)
+        
+        jal puzzle_solving
+                
+        lw $t0, 0($sp)
+        lw $t1, 4($sp)
+        lw $t2, 8($sp)
+        lw $t3, 12($sp)
+        lw $t4, 16($sp)
+        lw $a0, 20($sp)
+        add $sp, $sp, 24
+
         j   interrupt_dispatch
 non_intrpt:                             # was some non-interrupt
         li      $v0, PRINT_STRING
