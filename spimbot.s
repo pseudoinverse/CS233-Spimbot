@@ -37,8 +37,25 @@ puzzle:      .half 0:2000
 heap:        .half 0:2000
 #### Puzzle
 
-rng:  # Random number generator
-        
+rng:  # Random number generator using Xorshift technique
+        li $t0, 13
+        li $t1, 17
+        li $t2, 5
+        sll $t3, $a0, $t0
+        xor $a0, $a0, $t3
+
+        srl $t3, $a0, $t1
+        xor $a0, $a0, $t3
+
+        sll $t3, $a0, $t2
+        xor $a0, $a0, $t3
+
+        andi $t0, $a0, 0x111 # Get last 3 bits, value range 0-7
+        addi $t0, $t0, 1 # value range 1-8
+
+        li $t1, 45
+        mul  $v0, $t0, $t1 # return value range 45-360
+        jr $ra
 
 .text
 main:
