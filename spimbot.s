@@ -40,6 +40,9 @@ heap:        .half 0:2000
 
 .text
 
+# maimbot logic
+#---------------------------------------------------------------------
+
 main:
 # Construct interrupt mask
             li      $t4, 0
@@ -76,21 +79,20 @@ la $s2, BOT_X
 lw $s2, ($s2)
 li $s3, 10
 blt $s2, $s3, do_move
-li $s0, 7
+# li $s0, 7
 do_move:
 
 
 
 #Fill in your code here
-nimabi:
+fsm_start:
 
 beq $s0, 0, phase0
 beq $s0, 1, phase1
 beq $s0, 2, phase2
 beq $s0, 3, phase3
 beq $s0, 4, phase4
-beq $s0, 5, phase5
-beq $s0, 6, phase6
+
 beq $s0, 7, phase_stop
 
 phase0:
@@ -116,7 +118,7 @@ phase0:
         la $v1, VELOCITY
         sw $v0, ($v1)
 
-        b nimabi_end
+        b fsm_end
 
 phase1: 
         bne $s1, 200, phase1_cont
@@ -141,7 +143,7 @@ phase1:
         la $v1, VELOCITY
         sw $v0, ($v1)
 
-        b nimabi_end
+        b fsm_end
 
 phase2: 
         bne $s1, 20000, phase2_cont
@@ -166,7 +168,7 @@ phase2:
         la $v1, VELOCITY
         sw $v0, ($v1)
 
-        b nimabi_end
+        b fsm_end
 
 phase3: 
         bne $s1, 200, phase3_cont
@@ -191,7 +193,7 @@ phase3:
         la $v1, VELOCITY
         sw $v0, ($v1)
 
-        b nimabi_end
+        b fsm_end
 
 phase4: 
         bne $s1, 2700, phase4_cont
@@ -216,57 +218,7 @@ phase4:
         la $v1, VELOCITY
         sw $v0, ($v1)
 
-        b nimabi_end
-
-phase5: 
-        bne $s1, 5000, phase5_cont
-        li $s1, 0
-        li $s0, 6
-        b phase6
-        phase5_cont:
-
-        li $v0, 1
-        la $v1, ANGLE_CONTROL
-        sw $v0, ($v1)
-
-        li $v0, 1
-        la $v1, PICKUP
-        sw $v0, ($v1)
-
-        li $v0, 36
-        la $v1, ANGLE
-        sw $v0, ($v1)
-
-        li $v0, 100
-        la $v1, VELOCITY
-        sw $v0, ($v1)
-
-        b nimabi_end
-
-phase6: 
-        bne $s1, 5000, phase6_cont
-        li $s1, 0
-        li $s0, 7
-        b phase_stop
-        phase6_cont:
-
-        li $v0, 1
-        la $v1, ANGLE_CONTROL
-        sw $v0, ($v1)
-
-        li $v0, 1
-        la $v1, PICKUP
-        sw $v0, ($v1)
-
-        li $v0, -123
-        la $v1, ANGLE
-        sw $v0, ($v1)
-
-        li $v0, 100
-        la $v1, VELOCITY
-        sw $v0, ($v1)
-
-        b nimabi_end
+        b fsm_end
 
 phase_stop:
 
@@ -278,16 +230,27 @@ phase_stop:
         la $v1, VELOCITY
         sw $v0, ($v1)
 
-        b nimabi_end
+        b fsm_end
 
-nimabi_end:
+fsm_end:
 
 addi $s1, $s1, 1
-b nimabi
+b fsm_start
 
 
 while1:
         b while1
+
+
+
+
+
+
+
+
+
+
+#---------------------------------------------------------------------
 
 
 encode_domino:
